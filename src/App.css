@@ -1,0 +1,47 @@
+#root {
+  margin: 0 auto;
+  text-align: center;
+}
+
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+.card {
+  padding: 2em;
+}
+
+.screen {
+  height: 100vh; /* Full viewport height */
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  overflow: hidden; /* Prevent any overflow issues */
+  margin: 0;
+  padding: 0;
+}
+
+.marquee {
+  height: 40px; /* Match rowHeight in the JavaScript logic */
+}
+
+
+.screen-fill {
+  display: grid;
+  grid-template-rows: repeat(auto-fill, minmax(40px, 1fr));
+  height: 100vh;
+  overflow: hidden;
+}
+
