@@ -81,6 +81,9 @@ function App() {
           WIP
           ‏‏‎ ‎
           ‏‏‎ ‎
+          I'll put something cool here, just give me time :)
+          ‏‏‎ ‎
+          ‏‏‎ ‎
         </Marquee>
       ))}
     </div>
