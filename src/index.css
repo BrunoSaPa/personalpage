@@ -6,13 +6,19 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #2D2D2A;
+  background-color: #000000;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+html, body {
+  overflow: hidden;
+  height: 100%; 
+}
+
 
 
 @media (prefers-color-scheme: light) {
