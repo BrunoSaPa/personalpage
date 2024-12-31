@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import { Center } from '@react-three/drei';
@@ -9,6 +9,10 @@ const RotatingModel = () => {
     const modelRef = useRef();
     const { scene: gltfScene } = useGLTF('/assets/neonflower.glb');
     const lerpSpeed = 0.04; // Controla la velocidad de la interpolación
+    const [rotationSpeed, setRotationSpeed] = useState(0); // Velocidad de rotación controlada por scroll
+    const [touchStartX, setTouchStartX] = useState(null); // Coordenada inicial del toque
+    const acceleration = 0.0008; // Incremento de velocidad por cada evento de scroll
+    const maxSpeed = 0.3; // Límite máximo de velocidad
 
     // Mapa de colores de destino para cada child
     const colorMap = useRef({
@@ -22,10 +26,63 @@ const RotatingModel = () => {
         head002: { current: new THREE.Color(0x000000), target: new THREE.Color(0x000000), emissiveIntensity: 0 }
     });
 
+    useEffect(() => {
+        const handleWheel = (event) => {
+            event.preventDefault(); // Evita el scroll de la página
+    
+            // Determina la dirección del scroll
+            const direction = event.deltaY || event.deltaX;
+            
+            // Incrementa la velocidad con sensibilidad ajustada para PC
+            const pcAcceleration = acceleration; // Sensibilidad normal
+            setRotationSpeed((prevSpeed) => {
+                const newSpeed = prevSpeed + direction * pcAcceleration;
+                return THREE.MathUtils.clamp(newSpeed, -maxSpeed, maxSpeed);
+            });
+        };
+    
+        const handleTouchStart = (event) => {
+            // Almacena la posición inicial del toque
+            setTouchStartX(event.touches[0].clientX);
+        };
+    
+        const handleTouchMove = (event) => {
+            if (touchStartX === null) return;
+    
+            const touchEndX = event.touches[0].clientX;
+            const direction = touchEndX > touchStartX ? -1 : 1; // Determina la dirección del swipe
+    
+            // Incrementa la velocidad con mayor sensibilidad para móviles
+            const touchAcceleration = acceleration * 10; // Incrementa la sensibilidad en móviles
+            setRotationSpeed((prevSpeed) => {
+                const newSpeed = prevSpeed + direction * touchAcceleration;
+                return THREE.MathUtils.clamp(newSpeed, -maxSpeed, maxSpeed);
+            });
+    
+            setTouchStartX(touchEndX); // Actualiza la posición inicial para el siguiente movimiento
+        };
+    
+        // Agregar eventos para scroll (PC) y táctiles (móviles)
+        window.addEventListener('wheel', handleWheel, { passive: false });
+        window.addEventListener('touchstart', handleTouchStart, { passive: false });
+        window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    
+        return () => {
+            // Eliminar los eventos al desmontar el componente
+            window.removeEventListener('wheel', handleWheel);
+            window.removeEventListener('touchstart', handleTouchStart);
+            window.removeEventListener('touchmove', handleTouchMove);
+        };
+    }, [touchStartX]);
+    
+
     useFrame(() => {
         if (modelRef.current) {
             // Rotar el modelo
-            modelRef.current.rotation.y -= 0.02;
+            //modelRef.current.rotation.y -= 0.02;
+
+            modelRef.current.rotation.y += rotationSpeed;
+            setRotationSpeed((prev) => THREE.MathUtils.lerp(prev, 0, 0.05));
 
             // Convertir la rotación Y a grados
             const rotationYInDegrees = THREE.MathUtils.radToDeg(modelRef.current.rotation.y % (2 * Math.PI));
