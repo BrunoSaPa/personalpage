@@ -9,7 +9,7 @@ import { GlitchMode, BlendFunction } from 'postprocessing'
 const RotatingModel = () => {
     const modelRef = useRef();
     const { scene: gltfScene } = useGLTF('/assets/neonflower.glb');
-    const lerpSpeed = 0.03;
+    const lerpSpeed = 0.025;
     const [rotationSpeed, setRotationSpeed] = useState(0);
     const [touchStartX, setTouchStartX] = useState(null);
     const acceleration = 0.0008;
