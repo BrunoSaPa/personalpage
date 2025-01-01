@@ -135,7 +135,7 @@ const RotatingModel = () => {
                     const colorInfo = colorMap.current[child.name];
 
                     if (colorInfo) {
-                        const targetIntensity = colorInfo.emissiveIntensity + pulseIntensity * 2.5;
+                        const targetIntensity = colorInfo.emissiveIntensity + pulseIntensity * 2;
                         const targetColor = isNearZero ? ((child.name != 'body002' && child.name != 'head002' && child.name != 'boot002' && child.name != 'petal002') ? new THREE.Color(0x9b9b9b) : colorInfo.target) : colorInfo.target;
                         const finalIntensity = computeFinalIntensity(child, targetIntensity);
                         colorInfo.current.lerp(targetColor, lerpSpeed);
