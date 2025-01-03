@@ -6,17 +6,17 @@ import { Bloom, EffectComposer, Glitch, DotScreen, Scanline } from '@react-three
 import * as THREE from 'three';
 import { GlitchMode, BlendFunction } from 'postprocessing'
 
-const RotatingModel = () => {
+const RotatingModel = ({isNearZero, setIsNearZero}) => {
     const modelRef = useRef();
     const { scene: gltfScene } = useGLTF('/assets/neonflower.glb');
-    const lerpSpeed = 0.025;
+    const lerpSpeed = 0.02;
     const [rotationSpeed, setRotationSpeed] = useState(0);
     const [touchStartX, setTouchStartX] = useState(null);
     const acceleration = 0.0008;
     const maxSpeed = 0.5;
     const [pulseIntensity, setPulseIntensity] = useState(0);
     const [isPulsating, setIsPulsating] = useState(false);
-    const [isNearZero, setIsNearZero] = useState(false);
+    //const [isNearZero, setIsNearZero] = useState(zero);
 
     const colorMap = useRef({
         body001: { current: new THREE.Color(0x679436), target: new THREE.Color(0x679436), emissiveIntensity: 4 },
@@ -193,9 +193,9 @@ const RotatingModel = () => {
             <EffectComposer>
                 <Bloom intensity={1} luminanceThreshold={.4} luminanceSmoothing={0.2} />
                 {isNearZero && <Glitch
-                    delay={[0, .5]} // min and max glitch delay
-                    duration={[0.6, 3.0]} // min and max glitch duration
-                    strength={[1, 20]} // min and max glitch strength
+                    delay={[0, .3]} // min and max glitch delay
+                    duration={[1, 3.0]} // min and max glitch duration
+                    strength={[2, 20]} // min and max glitch strength
                     mode={GlitchMode.SPORADIC} // glitch mode
                     ratio={0.85} // Threshold for strong glitches, 0 - no weak glitches, 1 - no strong glitches.
                 />}

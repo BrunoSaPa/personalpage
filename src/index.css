@@ -12,11 +12,24 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --gradient-start: #2d2d2d; 
+  --gradient-end: #000; 
 }
 
 html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end));
   overflow: hidden;
-  height: 100%; 
+}
+
+.app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
 
