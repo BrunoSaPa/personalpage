@@ -3,7 +3,7 @@ import { Particles } from "react-tsparticles";
 import { loadFull } from "tsparticles";
 
 const ParticlesBackground = ({ isNearZero }) => {
-  const [particleSpeed, setParticleSpeed] = useState(4);
+  const [particleSpeed, setParticleSpeed] = useState(3);
   const [linksOpacity, setLinksOpacity] = useState(0.4);
 
   const particlesInit = useCallback(async (engine) => {
@@ -44,7 +44,7 @@ const ParticlesBackground = ({ isNearZero }) => {
         value: 50,
         density: {
           enable: true,
-          area: 800,
+          area: 500,
         },
       },
       links: {

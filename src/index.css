@@ -5,7 +5,7 @@
   font-style: normal;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: #E3E4DB;
   background-color: #2d2d2d;
 
   font-synthesis: none;
@@ -15,6 +15,10 @@
 
   --gradient-start: #2d2d2d; 
   --gradient-end: #000; 
+
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none; 
 }
 
 html, body {
@@ -32,19 +36,104 @@ html, body {
   overflow: hidden;
 }
 
-
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.content-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
+.text-below {
+  position: absolute;
+  bottom: 2rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 10;
+  padding: 1rem;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.fade-out {
+  opacity: 0;
+}
+
+.fade-in {
+  opacity: 1;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  min-height: 2.5rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  opacity: 0.8;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+
+
+.social-links {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.social-links li {
+  display: inline-block;
+}
+
+.social-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.87);
+  transition: text-shadow 0.3s ease, color 0.3s ease;
+}
+
+.social-links a:hover svg {
+  filter: drop-shadow(0 0 0.5rem #fff) 
+          drop-shadow(0 0 1rem #fff) 
+          drop-shadow(0 0 1.5rem #002642) 
+          drop-shadow(0 0 2rem #002642) ;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .text-below {
+    bottom: 8rem; 
+    font-size: 1.5rem; 
+  }
+
+  .title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .social-links {
+    gap: 1rem; 
+  }
+
+  .social-links a {
+    width: 2rem; 
+    height: 2rem;
+  }
+
+  .content-wrapper {
+    padding-top: 2rem; 
+  }
+
+  canvas { 
+    transform: translateY(-8rem);
+  }
+
+}
 

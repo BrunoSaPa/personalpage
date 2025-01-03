@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { TypeAnimation } from 'react-type-animation';
 import Canvas3D from './components/Canvas3D';
 import RotatingModel from './components/RotatingModel';
 import ParticlesBackground from './components/ParticlesBackground';
+import { Github, Instagram, Linkedin, Mail } from 'lucide-react';
 
 function App() {
   const [isNearZero, setIsNearZero] = useState(false);
@@ -15,13 +17,20 @@ function App() {
     return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
   };
 
+  const socialLinks = [
+    { id: 1, href: 'https://github.com/BrunoSaPa', icon: <Github size={24} />, label: 'GitHub' },
+    { id: 2, href: 'https://www.instagram.com/bruno.sapa/', icon: <Instagram size={24} />, label: 'Instagram' },
+    { id: 3, href: 'https://www.linkedin.com/in/bruno-sanchez-padilla/', icon: <Linkedin size={24} />, label: 'LinkedIn' },
+    { id: 4, href: 'mailto:brunosanchezpadilla@gmail.com', icon: <Mail size={24} />, label: 'Email' },
+  ];
+
   useEffect(() => {
     const root = document.documentElement;
     const startColors = isNearZero ? ['#2d2d2d', '#121212'] : ['#000', '#000'];
     const endColors = isNearZero ? ['#000', '#000'] : ['#2d2d2d', '#121212'];
 
     let t = 0;
-    const duration = 1000; // 1 second for transition
+    const duration = 1000;
     const step = 16 / duration;
 
     const animate = () => {
@@ -40,11 +49,47 @@ function App() {
   }, [isNearZero]);
 
   return (
-    <div className="app"> 
-    <ParticlesBackground isNearZero={isNearZero}></ParticlesBackground>
-    <Canvas3D>
-        <RotatingModel setIsNearZero={setIsNearZero} isNearZero={isNearZero} />
-      </Canvas3D>
+    <div className="app">
+      <ParticlesBackground isNearZero={isNearZero} />
+      <div className="content-wrapper">
+        <Canvas3D>
+          <RotatingModel setIsNearZero={setIsNearZero} isNearZero={isNearZero} />
+        </Canvas3D>
+        <div className={`text-below ${isNearZero ? 'fade-out' : 'fade-in'}`}>
+          <TypeAnimation
+            sequence={[
+              'FAIL FAST',
+              1500,
+              'FAIL OFTEN',
+              500,
+              'FAIL OFTEN.',
+              200,
+              'FAIL OFTEN..',
+              200,
+              'FAIL OFTEN...',
+              500,
+              'LEARN SOMETHING',
+              1000,
+              'LEARN SOMETHING.',
+              3500,
+            ]}
+            wrapper="h1"
+            speed={50}
+            className="title"
+            repeat={Infinity}
+          />
+          <ul className="social-links">
+            {socialLinks.map(link => (
+              <li key={link.id}>
+                <a href={link.href} target="_blank" rel="noopener noreferrer" aria-label={link.label}>
+                  {link.icon}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+      </div>
     </div>
   );
 }
