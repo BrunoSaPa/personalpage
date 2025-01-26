@@ -13,15 +13,16 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --gradient-start: #2d2d2d; 
-  --gradient-end: #000; 
+  --gradient-start: #2d2d2d;
+  --gradient-end: #000;
 
   user-select: none;
   -webkit-user-select: none;
-  -ms-user-select: none; 
+  -ms-user-select: none;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -100,17 +101,14 @@ html, body {
 }
 
 .social-links a:hover svg {
-  filter: drop-shadow(0 0 0.5rem #fff) 
-          drop-shadow(0 0 1rem #fff) 
-          drop-shadow(0 0 1.5rem #002642) 
-          drop-shadow(0 0 2rem #002642) ;
+  filter: drop-shadow(0 0 0.5rem #fff) drop-shadow(0 0 1rem #fff) drop-shadow(0 0 1.5rem #002642) drop-shadow(0 0 2rem #002642);
   cursor: pointer;
 }
 
 @media (max-width: 768px) {
   .text-below {
-    bottom: 2rem; 
-    font-size: 1.5rem; 
+    bottom: 2rem;
+    font-size: 1.5rem;
   }
 
   .title {
@@ -119,21 +117,20 @@ html, body {
   }
 
   .social-links {
-    gap: 1rem; 
+    gap: 1rem;
   }
 
   .social-links a {
-    width: 2rem; 
+    width: 2rem;
     height: 2rem;
   }
 
   .content-wrapper {
-    padding-top: 2rem; 
+    padding-top: 2rem;
   }
 
-  canvas { 
+  canvas {
     transform: translateY(-2rem);
   }
 
 }
-

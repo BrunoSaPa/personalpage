@@ -58,19 +58,17 @@ function App() {
         <div className={`text-below ${isNearZero ? 'fade-out' : 'fade-in'}`}>
           <TypeAnimation
             sequence={[
-              'FAIL FAST',
-              1500,
-              'FAIL OFTEN',
+              'Be passionate',
               500,
-              'FAIL OFTEN.',
+              'Be passionate.',
               200,
-              'FAIL OFTEN..',
+              'Be passionate..',
               200,
-              'FAIL OFTEN...',
+              'Be passionate...',
               500,
-              'LEARN SOMETHING',
+              'Be obsessed',
               1000,
-              'LEARN SOMETHING.',
+              'Be obsessed.',
               3500,
             ]}
             wrapper="h1"
