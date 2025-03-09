@@ -15,7 +15,7 @@
 
   --gradient-start: #000;
   --gradient-end: #0A0A0A; 
-  --size:20px;
+  --size:12px;
 
   
     --el-color1: #000;
@@ -76,7 +76,7 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: linear-gradient(to top, var(--gradient-start) 65%, var(--gradient-end) 100%);
+  background: linear-gradient(to top, var(--gradient-start) 65%, var(--gradient-end) 120%);
   overflow: hidden;
 }
 
