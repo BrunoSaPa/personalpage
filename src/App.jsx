@@ -42,7 +42,7 @@ function App() {
       } else {
         root.style.setProperty('--gradient-start', endColors[0]);
         root.style.setProperty('--gradient-end', endColors[1]);
-        
+
       }
     };
 
@@ -51,20 +51,20 @@ function App() {
 
   useEffect(() => {
     const root = document.documentElement;
-  
+
     // Define start and end colors for transition
     const startColors = isNearZero
-      ? ['#000', '#679436', '#873f00', '#FCBA04', '#000'] 
-      : ['#000', '#000', '#000', '#000', '#000']; 
-  
+      ? ['#000', '#679436', '#873f00', '#FCBA04', '#000']
+      : ['#000', '#000', '#000', '#000', '#000'];
+
     const endColors = isNearZero
       ? ['#000', '#000', '#000', '#000', '#000']
       : ['#000', '#679436', '#873f00', '#FCBA04', '#000'];
-  
+
     let t = 0;
     const duration = 1000;
     const step = 16 / duration;
-  
+
     const animate = () => {
       if (t < 1) {
         t += step;
@@ -73,7 +73,7 @@ function App() {
         root.style.setProperty('--el-color3', lerpColor(startColors[2], endColors[2], t));
         root.style.setProperty('--el-color4', lerpColor(startColors[3], endColors[3], t));
         root.style.setProperty('--el-color5', lerpColor(startColors[4], endColors[4], t));
-  
+
         requestAnimationFrame(animate);
       } else {
         root.style.setProperty('--el-color1', endColors[0]);
@@ -83,10 +83,19 @@ function App() {
         root.style.setProperty('--el-color5', endColors[4]);
       }
     };
-  
+
     animate();
   }, [isNearZero]);
-  
+
+  const wrapWithSpans = (text) => {
+    return text.split("").map((char, index) => (
+      <span key={index} style={{ animationDelay: `${index * 0.1}s` }}>
+        {char}
+      </span>
+    ));
+  };
+
+
 
   return (
     <div className="app">
@@ -99,17 +108,21 @@ function App() {
           <TypeAnimation
             sequence={[
               'Be passionate',
-              500,
+              900,
               'Be passionate.',
               200,
               'Be passionate..',
               200,
               'Be passionate...',
-              500,
+              2000,
+              'Be passionate.',
+              300,
+              'Be passion',
+              400,
               'Be obsessed',
-              1000,
+              2000,
               'Be obsessed.',
-              3500,
+              5000,
             ]}
             wrapper="h1"
             speed={50}

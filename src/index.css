@@ -112,12 +112,6 @@ body {
   opacity: 1;
 }
 
-.title {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  min-height: 2.5rem;
-}
 
 .subtitle {
   font-size: 1rem;
@@ -125,6 +119,26 @@ body {
   text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
 }
 
+
+
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+  animation: pulsateGlow 2s infinite alternate ease-in-out;
+}
+
+@keyframes pulsateGlow {
+  0% {
+    filter: drop-shadow(0 0 0.5rem #fff) drop-shadow(0 0 1rem #002642) drop-shadow(0 0 1.5rem #000);
+  }
+  50% {
+    filter: drop-shadow(0 0 1rem #fff) drop-shadow(0 0 1.5rem #002642) drop-shadow(0 0 2rem #000);
+  }
+  100% {
+    filter: drop-shadow(0 0 0.5rem #fff) drop-shadow(0 0 1rem #002642) drop-shadow(0 0 1.5rem #000);
+  }
+}
 
 .social-links {
   display: flex;
