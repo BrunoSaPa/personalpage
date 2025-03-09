@@ -26,8 +26,8 @@ function App() {
 
   useEffect(() => {
     const root = document.documentElement;
-    const startColors = isNearZero ? ['#000', '#121212'] : ['#000', '#000'];
-    const endColors = isNearZero ? ['#000', '#000'] : ['#000', '#121212'];
+    const startColors = isNearZero ? ['#000', '#0A0A0A'] : ['#000', '#000'];
+    const endColors = isNearZero ? ['#000', '#000'] : ['#000', '#0A0A0A'];
 
     let t = 0;
     const duration = 1000;
@@ -54,12 +54,12 @@ function App() {
   
     // Define start and end colors for transition
     const startColors = isNearZero
-      ? ['#000', '#679436', '#873f00', '#FCBA04', '#000'] // Normal colors
-      : ['#000', '#000', '#000', '#000', '#000']; // Black fade-out
+      ? ['#000', '#679436', '#873f00', '#FCBA04', '#000'] 
+      : ['#000', '#000', '#000', '#000', '#000']; 
   
     const endColors = isNearZero
-      ? ['#000', '#000', '#000', '#000', '#000'] // White/silver tones
-      : ['#000', '#679436', '#873f00', '#FCBA04', '#000']; // Reset to normal
+      ? ['#000', '#000', '#000', '#000', '#000']
+      : ['#000', '#679436', '#873f00', '#FCBA04', '#000'];
   
     let t = 0;
     const duration = 1000;
