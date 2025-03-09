@@ -26,8 +26,8 @@ function App() {
 
   useEffect(() => {
     const root = document.documentElement;
-    const startColors = isNearZero ? ['#2d2d2d', '#121212'] : ['#000', '#000'];
-    const endColors = isNearZero ? ['#000', '#000'] : ['#2d2d2d', '#121212'];
+    const startColors = isNearZero ? ['#000', '#121212'] : ['#000', '#000'];
+    const endColors = isNearZero ? ['#000', '#000'] : ['#000', '#121212'];
 
     let t = 0;
     const duration = 1000;
@@ -42,15 +42,55 @@ function App() {
       } else {
         root.style.setProperty('--gradient-start', endColors[0]);
         root.style.setProperty('--gradient-end', endColors[1]);
+        
       }
     };
 
     animate();
   }, [isNearZero]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+  
+    // Define start and end colors for transition
+    const startColors = isNearZero
+      ? ['#000', '#679436', '#873f00', '#FCBA04', '#000'] // Normal colors
+      : ['#000', '#000', '#000', '#000', '#000']; // Black fade-out
+  
+    const endColors = isNearZero
+      ? ['#000', '#000', '#000', '#000', '#000'] // White/silver tones
+      : ['#000', '#679436', '#873f00', '#FCBA04', '#000']; // Reset to normal
+  
+    let t = 0;
+    const duration = 1000;
+    const step = 16 / duration;
+  
+    const animate = () => {
+      if (t < 1) {
+        t += step;
+        root.style.setProperty('--el-color1', lerpColor(startColors[0], endColors[0], t));
+        root.style.setProperty('--el-color2', lerpColor(startColors[1], endColors[1], t));
+        root.style.setProperty('--el-color3', lerpColor(startColors[2], endColors[2], t));
+        root.style.setProperty('--el-color4', lerpColor(startColors[3], endColors[3], t));
+        root.style.setProperty('--el-color5', lerpColor(startColors[4], endColors[4], t));
+  
+        requestAnimationFrame(animate);
+      } else {
+        root.style.setProperty('--el-color1', endColors[0]);
+        root.style.setProperty('--el-color2', endColors[1]);
+        root.style.setProperty('--el-color3', endColors[2]);
+        root.style.setProperty('--el-color4', endColors[3]);
+        root.style.setProperty('--el-color5', endColors[4]);
+      }
+    };
+  
+    animate();
+  }, [isNearZero]);
+  
+
   return (
     <div className="app">
-      <ParticlesBackground isNearZero={isNearZero} />
+      <div className="el"></div>
       <div className="content-wrapper">
         <Canvas3D>
           <RotatingModel setIsNearZero={setIsNearZero} isNearZero={isNearZero} />
@@ -76,15 +116,6 @@ function App() {
             className="title"
             repeat={Infinity}
           />
-          <ul className="social-links">
-            {socialLinks.map(link => (
-              <li key={link.id}>
-                <a href={link.href} target="_blank" rel="noopener noreferrer" aria-label={link.label}>
-                  {link.icon}
-                </a>
-              </li>
-            ))}
-          </ul>
         </div>
 
       </div>

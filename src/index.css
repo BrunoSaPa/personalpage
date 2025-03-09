@@ -6,19 +6,69 @@
 
   color-scheme: light dark;
   color: #E3E4DB;
-  background-color: #2d2d2d;
+
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --gradient-start: #2d2d2d;
-  --gradient-end: #000;
+  --gradient-start: #000;
+  --gradient-end: #0a0f2c; 
+  --size:20px;
+
+  
+    --el-color1: #000;
+    --el-color2: #679436;
+    --el-color3: #873f00;
+    --el-color4: #FCBA04;
+    --el-color5: #000;
 
   user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
+}
+
+
+.el {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: conic-gradient(
+    from 180deg at 50% 20%,
+    var(--el-color1) 0deg,
+    var(--el-color2) 120deg,
+    var(--el-color3) 140deg,
+    var(--el-color3) 220deg,
+    var(--el-color4) 230deg,
+    var(--el-color5) 1turn
+  );
+  mask: radial-gradient(circle at 50% 50%, white 2px, transparent 2.5px) 50% 50% / var(--size) var(--size),
+        url("https://assets.codepen.io/605876/noise-mask.png") 256px 50% / 256px 256px;
+  mask-composite: intersect;
+  -webkit-mask-composite: destination-in;
+  animation: flicker 20s infinite linear;
+  z-index: 0;
+}
+
+@keyframes flicker {
+  to {
+    mask-position: 50% 50%, 0 50%;
+  }
+}
+
+.el.near-zero {
+  background: conic-gradient(
+    from 180deg at 50% 20%,
+    #ffffff 0deg,
+    #d9d9d9 90deg,
+    #bfbfbf 180deg,
+    #a6a6a6 270deg,
+    #ffffff 1turn
+  );
+  animation: none; 
 }
 
 html,
@@ -26,7 +76,7 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end));
+  background: linear-gradient(to top, var(--gradient-start), var(--gradient-end));
   overflow: hidden;
 }
 
@@ -45,8 +95,8 @@ body {
 
 .text-below {
   position: absolute;
-  bottom: 2rem;
-  left: 0;
+  bottom: 6rem;
+  left: 2rem;
   right: 0;
   text-align: center;
   z-index: 10;
@@ -107,7 +157,7 @@ body {
 
 @media (max-width: 768px) {
   .text-below {
-    bottom: 2rem;
+    bottom: 8rem;
     font-size: 1.5rem;
   }
 
