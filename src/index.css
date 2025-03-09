@@ -157,7 +157,7 @@ body {
 
 @media (max-width: 768px) {
   .text-below {
-    bottom: 8rem;
+    bottom: 6rem;
     font-size: 1.5rem;
   }
 
