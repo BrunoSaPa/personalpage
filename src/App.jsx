@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import Canvas3D from './components/Canvas3D';
 import RotatingModel from './components/RotatingModel';
@@ -7,6 +7,11 @@ import { Github, Instagram, Linkedin, Mail } from 'lucide-react';
 
 function App() {
   const [isNearZero, setIsNearZero] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
+
+  const handleModelReady = useCallback(() => {
+    setTimeout(() => setIsRevealed(true), 200);
+  }, []);
 
   const lerpColor = (color1, color2, t) => {
     const c1 = parseInt(color1.slice(1), 16);
@@ -99,10 +104,11 @@ function App() {
 
   return (
     <div className="app">
+      <div className={`cinematic-overlay ${isRevealed ? 'revealed' : ''}`} />
       <div className="el"></div>
       <div className="content-wrapper">
         <Canvas3D>
-          <RotatingModel setIsNearZero={setIsNearZero} isNearZero={isNearZero} />
+          <RotatingModel setIsNearZero={setIsNearZero} isNearZero={isNearZero} onReady={handleModelReady} />
         </Canvas3D>
         <div className={`text-below ${isNearZero ? 'fade-out' : 'fade-in'}`}>
           <TypeAnimation

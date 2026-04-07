@@ -6,12 +6,12 @@ import { Bloom, EffectComposer, Glitch, DotScreen, Scanline } from '@react-three
 import * as THREE from 'three';
 import { GlitchMode, BlendFunction } from 'postprocessing'
 
-const RotatingModel = ({isNearZero, setIsNearZero}) => {
+const RotatingModel = ({isNearZero, setIsNearZero, onReady}) => {
     const modelRef = useRef();
     const { scene: gltfScene } = useGLTF('/assets/neonflower.glb');
     const lerpSpeed = 0.02;
     const [rotationSpeed, setRotationSpeed] = useState(0);
-    const [touchStartX, setTouchStartX] = useState(null);
+    const lastTouchX = useRef(null);
     const acceleration = 0.0008;
     const maxSpeed = 0.5;
     const [pulseIntensity, setPulseIntensity] = useState(0);
@@ -54,38 +54,43 @@ const RotatingModel = ({isNearZero, setIsNearZero}) => {
         };
 
         const handleTouchStart = (event) => {
-            // Almacena la posición inicial del toque
-            setTouchStartX(event.touches[0].clientX);
+            lastTouchX.current = event.touches[0].clientX;
         };
 
         const handleTouchMove = (event) => {
-            if (touchStartX === null) return;
+            event.preventDefault();
+            if (lastTouchX.current === null) return;
 
-            const touchEndX = event.touches[0].clientX;
-            const direction = touchEndX > touchStartX ? -1 : 1; // Determina la dirección del swipe
+            const currentX = event.touches[0].clientX;
+            const delta = currentX - lastTouchX.current;
 
-            // Incrementa la velocidad con mayor sensibilidad para móviles
-            const touchAcceleration = acceleration * 5; // Incrementa la sensibilidad en móviles
+            const touchSensitivity = 0.004;
             setRotationSpeed((prevSpeed) => {
-                const newSpeed = prevSpeed + direction * touchAcceleration;
+                const newSpeed = prevSpeed - delta * touchSensitivity;
                 return THREE.MathUtils.clamp(newSpeed, -maxSpeed, maxSpeed);
             });
 
-            setTouchStartX(touchEndX); // Actualiza la posición inicial para el siguiente movimiento
+            lastTouchX.current = currentX;
+        };
+
+        const handleTouchEnd = () => {
+            lastTouchX.current = null;
         };
 
         // Agregar eventos para scroll (PC) y táctiles (móviles)
         window.addEventListener('wheel', handleWheel, { passive: false });
         window.addEventListener('touchstart', handleTouchStart, { passive: false });
         window.addEventListener('touchmove', handleTouchMove, { passive: false });
+        window.addEventListener('touchend', handleTouchEnd);
 
         return () => {
             // Eliminar los eventos al desmontar el componente
             window.removeEventListener('wheel', handleWheel);
             window.removeEventListener('touchstart', handleTouchStart);
             window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('touchend', handleTouchEnd);
         };
-    }, [touchStartX]);
+    }, []);
 
     useEffect(() => {
         // Randomized pulsation logic
@@ -111,7 +116,7 @@ const RotatingModel = ({isNearZero, setIsNearZero}) => {
             //modelRef.current.rotation.y -= 0.02;
 
             modelRef.current.rotation.y += rotationSpeed;
-            setRotationSpeed((prev) => THREE.MathUtils.lerp(prev, 0, 0.05));
+            setRotationSpeed((prev) => THREE.MathUtils.lerp(prev, 0, 0.02));
 
 
             const time = state.clock.getElapsedTime();
@@ -184,6 +189,10 @@ const RotatingModel = ({isNearZero, setIsNearZero}) => {
             }
         });
     }, [gltfScene]);
+
+    useEffect(() => {
+        if (onReady) onReady();
+    }, []);
 
     return (
         <>
