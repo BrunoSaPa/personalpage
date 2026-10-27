@@ -1,222 +1,161 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { useFrame } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
-import { Center } from '@react-three/drei';
-import { Bloom, EffectComposer, Glitch, DotScreen, Scanline } from '@react-three/postprocessing';
-import * as THREE from 'three';
-import { GlitchMode, BlendFunction } from 'postprocessing'
+import { Center, useGLTF } from '@react-three/drei';
+import { Color, DoubleSide, MathUtils, MeshStandardMaterial } from 'three';
+import FlowerEffects from './FlowerEffects';
+import { usePrefersReducedMotion } from '../lib/dither/motion';
 
-const RotatingModel = ({isNearZero, setIsNearZero, onReady}) => {
-    const modelRef = useRef();
-    const { scene: gltfScene } = useGLTF('/assets/neonflower.glb');
-    const lerpSpeed = 0.02;
-    const [rotationSpeed, setRotationSpeed] = useState(0);
-    const lastTouchX = useRef(null);
-    const acceleration = 0.0008;
-    const maxSpeed = 0.5;
-    const [pulseIntensity, setPulseIntensity] = useState(0);
-    const [isPulsating, setIsPulsating] = useState(false);
-    //const [isNearZero, setIsNearZero] = useState(zero);
+const materials = {
+  body001: { color: '#679436', intensity: 4 },
+  boot001: { color: '#873f00', intensity: 10 },
+  head001: { color: '#873f00', intensity: 10 },
+  petal001: { color: '#FCBA04', intensity: 2 },
+};
+const dyingColor = new Color('#9b9b9b');
 
-    const colorMap = useRef({
-        body001: { current: new THREE.Color(0x679436), target: new THREE.Color(0x679436), emissiveIntensity: 4 },
-        boot001: { current: new THREE.Color(0x873f00), target: new THREE.Color(0x873f00), emissiveIntensity: 10 },
-        head001: { current: new THREE.Color(0x873f00), target: new THREE.Color(0x873f00), emissiveIntensity: 10 },
-        petal001: { current: new THREE.Color(0xFCBA04), target: new THREE.Color(0xFCBA04), emissiveIntensity: 2 },
-        body002: { current: new THREE.Color(0x000000), target: new THREE.Color(0x000000), emissiveIntensity: 0 },
-        boot002: { current: new THREE.Color(0x000000), target: new THREE.Color(0x000000), emissiveIntensity: 0 },
-        petal002: { current: new THREE.Color(0x000000), target: new THREE.Color(0x000000), emissiveIntensity: 0 },
-        head002: { current: new THREE.Color(0x000000), target: new THREE.Color(0x000000), emissiveIntensity: 0 }
+function RotatingModel({ isDying, onPhaseChange, onReady }) {
+  const { scene } = useGLTF('/assets/neonflower.glb');
+  const modelRef = useRef(null);
+  const speedRef = useRef(0);
+  const phaseRef = useRef(false);
+  const pointerRef = useRef(null);
+  const pulseRef = useRef({ start: -10, next: 2 + Math.random() * 5 });
+  const reducedMotion = usePrefersReducedMotion();
+
+  const model = useMemo(() => {
+    const clone = scene.clone(true);
+    clone.traverse((child) => {
+      if (!child.isMesh) return;
+      // Keep the original solid geometry; its separate wire cage is no longer drawn.
+      child.visible = child.name.endsWith('002');
+      if (!child.visible) return;
+      const settings = materials[child.name.replace(/002$/, '001')];
+      child.geometry = child.geometry.clone();
+      child.geometry.computeVertexNormals();
+      child.material = new MeshStandardMaterial({
+        color: settings.color,
+        emissive: settings.color,
+        emissiveIntensity: settings.intensity * 0.035,
+        roughness: 0.85,
+        metalness: 0,
+        side: DoubleSide,
+      });
+      child.userData.aliveColor = new Color(settings.color);
     });
+    return clone;
+  }, [scene]);
 
-    const computeFinalIntensity = (child, targetIntensity) => {
-        if (isNearZero) {
-            if (child.name !== 'body002' && child.name !== 'boot002' && child.name !== 'petal002' && child.name !== 'head002') {
-                return THREE.MathUtils.lerp(child.material.emissiveIntensity, 4, lerpSpeed);
-            }
-            return child.material.emissiveIntensity;
-        } else {
-            return THREE.MathUtils.lerp(child.material.emissiveIntensity, targetIntensity, lerpSpeed);
-        }
+  useEffect(() => {
+    onReady();
+    return () => model.traverse((child) => {
+      if (child.isMesh && child.visible) {
+        child.material.dispose();
+        child.geometry.dispose();
+      }
+    });
+  }, [model, onReady]);
+
+  useEffect(() => {
+    const accelerate = (amount) => {
+      speedRef.current = MathUtils.clamp(speedRef.current + amount, -0.5, 0.5);
     };
+    const handleWheel = (event) => {
+      event.preventDefault();
+      accelerate((event.deltaY || event.deltaX) * 0.0008);
+    };
+    const handlePointerDown = (event) => {
+      if (event.button !== 0) return;
+      pointerRef.current = { id: event.pointerId, x: event.clientX, type: event.pointerType };
+    };
+    const handlePointerMove = (event) => {
+      const pointer = pointerRef.current;
+      if (!pointer || pointer.id !== event.pointerId) return;
+      event.preventDefault();
+      accelerate(-(event.clientX - pointer.x) * (pointer.type === 'touch' ? 0.004 : 0.0015));
+      pointer.x = event.clientX;
+    };
+    const stopPointer = () => { pointerRef.current = null; };
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        accelerate(event.key === 'ArrowRight' ? 0.035 : -0.035);
+      }
+    };
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointermove', handlePointerMove, { passive: false });
+    window.addEventListener('pointerup', stopPointer);
+    window.addEventListener('pointercancel', stopPointer);
+    window.addEventListener('blur', stopPointer);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', stopPointer);
+      window.removeEventListener('pointercancel', stopPointer);
+      window.removeEventListener('blur', stopPointer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
-    useEffect(() => {
-        const handleWheel = (event) => {
-            event.preventDefault();
+  useFrame((state, delta) => {
+    if (!modelRef.current) return;
+    const frameScale = Math.min(delta * 60, 3);
+    modelRef.current.rotation.y += speedRef.current * frameScale;
+    speedRef.current *= Math.pow(0.98, frameScale);
+    if (Math.abs(speedRef.current) < 0.00001) speedRef.current = 0;
 
-            const direction = event.deltaY || event.deltaX;
+    const degrees = MathUtils.euclideanModulo(MathUtils.radToDeg(modelRef.current.rotation.y), 360);
+    const dying = degrees < 120 || degrees > 240;
+    if (phaseRef.current !== dying) {
+      phaseRef.current = dying;
+      onPhaseChange(dying);
+    }
 
-            const pcAcceleration = acceleration;
-            setRotationSpeed((prevSpeed) => {
-                const newSpeed = prevSpeed + direction * pcAcceleration;
-                return THREE.MathUtils.clamp(newSpeed, -maxSpeed, maxSpeed);
-            });
-        };
+    const time = state.clock.elapsedTime;
+    const pulse = pulseRef.current;
+    if (!dying && time > pulse.next) {
+      pulse.start = time;
+      pulse.next = time + 2 + 2 + Math.random() * 5;
+    }
+    const pulsating = !dying && !reducedMotion && time - pulse.start < 2;
+    const intensity = pulsating ? Math.sin(time * 5) * 0.5 + 0.5 : 0;
+    const smoothing = 1 - Math.pow(0.98, frameScale);
 
-        const handleTouchStart = (event) => {
-            lastTouchX.current = event.touches[0].clientX;
-        };
-
-        const handleTouchMove = (event) => {
-            event.preventDefault();
-            if (lastTouchX.current === null) return;
-
-            const currentX = event.touches[0].clientX;
-            const delta = currentX - lastTouchX.current;
-
-            const touchSensitivity = 0.004;
-            setRotationSpeed((prevSpeed) => {
-                const newSpeed = prevSpeed - delta * touchSensitivity;
-                return THREE.MathUtils.clamp(newSpeed, -maxSpeed, maxSpeed);
-            });
-
-            lastTouchX.current = currentX;
-        };
-
-        const handleTouchEnd = () => {
-            lastTouchX.current = null;
-        };
-
-        // Agregar eventos para scroll (PC) y táctiles (móviles)
-        window.addEventListener('wheel', handleWheel, { passive: false });
-        window.addEventListener('touchstart', handleTouchStart, { passive: false });
-        window.addEventListener('touchmove', handleTouchMove, { passive: false });
-        window.addEventListener('touchend', handleTouchEnd);
-
-        return () => {
-            // Eliminar los eventos al desmontar el componente
-            window.removeEventListener('wheel', handleWheel);
-            window.removeEventListener('touchstart', handleTouchStart);
-            window.removeEventListener('touchmove', handleTouchMove);
-            window.removeEventListener('touchend', handleTouchEnd);
-        };
-    }, []);
-
-    useEffect(() => {
-        // Randomized pulsation logic
-        const triggerPulsation = () => {
-            if (!isNearZero) {
-                setIsPulsating(true);
-                setTimeout(() => {
-                    setIsPulsating(false);
-                }, 2000); // Pulsate for 2 seconds
-            }
-
-            // Schedule next pulsation randomly between 2-7 seconds
-            const delay = Math.random() * 5000 + 2000;
-            setTimeout(triggerPulsation, delay);
-        };
-
-        triggerPulsation();
-    }, [isNearZero]);
-
-    useFrame((state) => {
-        if (modelRef.current) {
-            // Rotar el modelo
-            //modelRef.current.rotation.y -= 0.02;
-
-            modelRef.current.rotation.y += rotationSpeed;
-            setRotationSpeed((prev) => THREE.MathUtils.lerp(prev, 0, 0.02));
-
-
-            const time = state.clock.getElapsedTime();
-            const sineWave = isPulsating ? Math.sin(time * 5) * 0.5 + 0.5 : 0;
-            setPulseIntensity(sineWave);
-
-            // Convertir la rotación Y a grados
-            const rotationYInDegrees = THREE.MathUtils.radToDeg(modelRef.current.rotation.y % (2 * Math.PI));
-
-            // Normalizar a un rango de 0 a 360 grados
-            const normalizedDegrees = (rotationYInDegrees + 360) % 360;
-
-            // Detectar si está cerca de los rangos definidos
-            setIsNearZero(normalizedDegrees < 120 || normalizedDegrees > 240);
-
-
-
-            // Ajustar colores y emissiveIntensity
-            gltfScene.traverse((child) => {
-                if (child.isMesh) {
-                    const colorInfo = colorMap.current[child.name];
-
-                    if (colorInfo) {
-                        const targetIntensity = colorInfo.emissiveIntensity + pulseIntensity * 2;
-                        const targetColor = isNearZero ? ((child.name != 'body002' && child.name != 'head002' && child.name != 'boot002' && child.name != 'petal002') ? new THREE.Color(0x9b9b9b) : colorInfo.target) : colorInfo.target;
-                        const finalIntensity = computeFinalIntensity(child, targetIntensity);
-                        colorInfo.current.lerp(targetColor, lerpSpeed);
-                        child.material.emissive = colorInfo.current;
-                        child.material.color = colorInfo.current;
-                        child.material.emissiveIntensity = finalIntensity;
-                        child.material.needsUpdate = true;
-                    }
-                }
-            });
-        }
+    model.traverse((child) => {
+      if (!child.isMesh || !child.visible) return;
+      const settings = materials[child.name.replace(/002$/, '001')];
+      if (!settings) return;
+      const target = dying ? dyingColor : child.userData.aliveColor;
+      child.material.emissive.lerp(target, smoothing);
+      child.material.color.copy(child.material.emissive);
+      child.material.emissiveIntensity = MathUtils.lerp(
+        child.material.emissiveIntensity,
+        dying ? 0.12 : settings.intensity * 0.035 + intensity * 0.06,
+        smoothing,
+      );
     });
+  });
 
-    // Aplicar materiales emisivos
-    useEffect(() => {
-        gltfScene.traverse((child) => {
-            if (child.isMesh) {
-                if (['body002', 'boot002', 'petal002', 'head002'].includes(child.name)) {
-                    // Estos son los meshes que deben ser opacos
-                    child.material.emissive = new THREE.Color(0x000000);
-                    child.material.color = new THREE.Color(0x000000);
-                    child.material.emissiveIntensity = 0;
-                    child.material.needsUpdate = true;
-                }
-                if (child.name === 'body001') {
-                    colorMap.current.body001.target = new THREE.Color(0x679436);
-                    child.material.emissive = colorMap.current.body001.target;
-                    child.material.color = colorMap.current.body001.target;
-                    child.material.emissiveIntensity = 4;
-                    child.material.needsUpdate = true;
-                }
-                if (['boot001', 'head001'].includes(child.name)) {
-                    colorMap.current.boot001.target = new THREE.Color(0x873f00);
-                    child.material.emissive = colorMap.current.boot001.target;
-                    child.material.color = colorMap.current.boot001.target;
-                    child.material.emissiveIntensity = 10;
-                    child.material.needsUpdate = true;
-                }
-                if (child.name === 'petal001') {
-                    colorMap.current.petal001.target = new THREE.Color(0xFCBA04);
-                    child.material.emissive = colorMap.current.petal001.target;
-                    child.material.color = colorMap.current.petal001.target;
-                    child.material.emissiveIntensity = 2;
-                    child.material.needsUpdate = true;
-                }
-            }
-        });
-    }, [gltfScene]);
+  return (
+    <>
+      {/* A small optical offset balances the flower head against its curved stem and boot. */}
+      <group position={[-0.025, -0.12, 0]}>
+        <Center precise>
+          <primitive ref={modelRef} object={model} scale={0.78} rotation={[0, Math.PI, 0]} dispose={null} />
+        </Center>
+      </group>
+      <FlowerEffects isDying={isDying} />
+    </>
+  );
+}
 
-    useEffect(() => {
-        if (onReady) onReady();
-    }, []);
-
-    return (
-        <>
-            <Center>
-                <primitive ref={modelRef} object={gltfScene} scale={[0.7, 0.7, 0.7]} rotation={[0, Math.PI, 0]} />
-            </Center>
-            <EffectComposer>
-                <Bloom intensity={1} luminanceThreshold={.4} luminanceSmoothing={0.2} />
-                {isNearZero && <Glitch
-                    delay={[0, .3]} // min and max glitch delay
-                    duration={[1, 3.0]} // min and max glitch duration
-                    strength={[2, 20]} // min and max glitch strength
-                    mode={GlitchMode.SPORADIC} // glitch mode
-                    ratio={0.85} // Threshold for strong glitches, 0 - no weak glitches, 1 - no strong glitches.
-                />}
-
-                <Scanline
-                    blendFunction={BlendFunction.OVERLAY} // blend mode
-                    density={2} // scanline density
-                />
-
-            </EffectComposer>
-        </>
-    );
+RotatingModel.propTypes = {
+  isDying: PropTypes.bool.isRequired,
+  onPhaseChange: PropTypes.func.isRequired,
+  onReady: PropTypes.func.isRequired,
 };
 
 export default RotatingModel;
