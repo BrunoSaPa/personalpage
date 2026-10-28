@@ -41,8 +41,19 @@ button { font: inherit; }
 .title > span { position: relative; }
 /* Center the words themselves; the typing cursor has no visual weight to balance. */
 .title > span::after { position: absolute; left: 100%; color: var(--dither-text-ink); -webkit-text-fill-color: currentColor; }
-.dither-text { display: inline-block; background-repeat: no-repeat; color: var(--dither-text-ink); image-rendering: pixelated; }
-.dither-text[data-state='ready'] { background-clip: text; -webkit-background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+.dither-text { display: inline-block; background-repeat: no-repeat; color: var(--dither-text-ink); -webkit-text-fill-color: currentColor; image-rendering: pixelated; }
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .dither-text[data-state='ready'] {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* This remains readable if a browser cannot paint the generated texture. */
+    text-shadow: 0 0 0 var(--dither-text-readable, currentColor);
+  }
+}
+@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
+  .dither-text { background-image: none !important; }
+}
 @keyframes breathe {
   from { filter: drop-shadow(0 0 5px #fff6) drop-shadow(0 0 13px #67943666); }
   to { filter: drop-shadow(0 0 9px #fff8) drop-shadow(0 0 22px #fcba0455); }
@@ -60,5 +71,5 @@ button { font: inherit; }
 }
 
 @media (forced-colors: active) {
-  .dither-text[data-state='ready'] { background-image: none !important; color: CanvasText; -webkit-text-fill-color: CanvasText; }
+  .dither-text[data-state='ready'] { background-image: none !important; color: CanvasText; -webkit-text-fill-color: CanvasText; text-shadow: none; }
 }

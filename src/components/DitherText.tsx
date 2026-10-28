@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
+import { Children, cloneElement, useCallback, useEffect, useRef } from "react";
+import type { CSSProperties, HTMLAttributes, ReactElement, ReactNode, Ref } from "react";
 
 import {
   bloomFilter,
   cssColor,
-  ditherMaskStyle,
   getThresholdMap,
   readDitherCell,
   useDitherColors,
@@ -73,6 +72,8 @@ export type DitherTextProps = Omit<
     children: ReactNode;
     /** The element to render. Default `"span"`. */
     as?: DitherTextTag;
+    /** Apply the fill to a single child that forwards its ref to its text element. */
+    asChild?: boolean;
     /** Ink colour: a palette name or any CSS colour. Default `"ink"`. */
     color?: DitherColor;
     /**
@@ -249,6 +250,7 @@ interface Frame {
   /** CSS `background-size` for the frame. */
   size: string;
   url: string;
+  readableColor: string;
 }
 
 interface Swapper {
@@ -279,11 +281,21 @@ const showQueued = async (swapper: Swapper) => {
   try {
     await image.decode();
   } catch {
-    // Swap anyway: a frame that will not decode beats a frozen fill.
+    // Keep the last decoded frame, or ordinary visible text on the first failure.
+    swapper.busy = false;
+    if (!swapper.shown) frame.el.dataset.state = "fallback";
+    void showQueued(swapper);
+    return;
+  }
+  if (!frame.el.isConnected) {
+    swapper.busy = false;
+    swapper.queued = null;
+    return;
   }
   swapper.shown = image;
   frame.el.style.backgroundImage = `url(${frame.url})`;
   frame.el.style.backgroundSize = frame.size;
+  frame.el.style.setProperty("--dither-text-readable", frame.readableColor);
   frame.el.dataset.state = "ready";
   // Not awaited: this call finishes once it has handed off, so a long run
   // of slow decodes doesn't build a chain of pending promises.
@@ -310,6 +322,7 @@ const fillSettings = (props: DitherTextFill & { ghost?: number }) => {
 export const DitherText = (props: DitherTextProps) => {
   const {
     as: Tag = "span",
+    asChild = false,
     children,
     color = "ink",
     direction = "down",
@@ -384,11 +397,19 @@ export const DitherText = (props: DitherTextProps) => {
         matrix
       );
       context.putImageData(image, 0, 0);
+      let url: string;
+      try {
+        url = canvas.toDataURL();
+      } catch {
+        // Privacy settings can block canvas export; leave the real text readable.
+        return;
+      }
       const swapper = swapperRef.current;
       swapper.queued = {
         el,
         size: `${cols * size}px ${rows * size}px`,
-        url: canvas.toDataURL(),
+        url,
+        readableColor: `rgba(${toByte(r)}, ${toByte(g)}, ${toByte(b)}, ${a * 0.45})`,
       };
       if (!swapper.busy) {
         showQueued(swapper);
@@ -431,12 +452,21 @@ export const DitherText = (props: DitherTextProps) => {
   const rootStyle: CSSProperties & Record<"--dither-text-ink", string> = {
     "--dither-text-ink": cssColor(ink),
     filter: bloomFilter(ink, bloom),
-    // Until the dither is painted, a CSS mask at the average tone.
-    ...(resolved || fill === "solid"
-      ? {}
-      : ditherMaskStyle((from + to) / 2, { matrix })),
+    // Use ordinary ink until a texture has decoded; a mask can hide this fallback.
     ...style,
   };
+
+  if (asChild) {
+    const child = Children.only(children) as ReactElement<
+      HTMLAttributes<HTMLElement> & { ref?: Ref<HTMLElement> }
+    >;
+    return cloneElement(child, {
+      ...rest,
+      ref: setRef,
+      className: cn("dither-text", className, child.props.className),
+      style: { ...rootStyle, ...child.props.style },
+    });
+  }
 
   return (
     <Tag

@@ -22,35 +22,36 @@ function App() {
       <div className={`cinematic-overlay${isReady ? ' revealed' : ''}`} aria-hidden="true" />
       <FlowerScene isDying={isDying} motion={motion} onMotion={handleMotion} onPhaseChange={setIsDying} onReady={handleReady} />
       <div className="text-below" aria-hidden={isDying}>
-        <DitherText
-          as="h1"
-          className="title"
-          color="#e8e5d7"
-          fill="gradient"
-          direction="down"
-          from={1}
-          to={0.45}
-          matrix="blue-noise"
-          cell={1}
-          animate={!isDying}
-          speed={0.4}
-        >
-          <TypeAnimation
-            sequence={[
-              'Be passionate', 900,
-              'Be passionate.', 200,
-              'Be passionate..', 200,
-              'Be passionate...', 2000,
-              'Be passionate.', 300,
-              'Be passion', 400,
-              'Be obsessed', 2000,
-              'Be obsessed.', 5000,
-            ]}
-            wrapper="span"
-            speed={50}
-            repeat={Infinity}
-          />
-        </DitherText>
+        <h1 className="title">
+          <DitherText
+            asChild
+            color="#e8e5d7"
+            fill="gradient"
+            direction="down"
+            from={1}
+            to={0.45}
+            matrix="blue-noise"
+            cell={1}
+            animate={!isDying}
+            speed={0.4}
+          >
+            <TypeAnimation
+              sequence={[
+                'Be passionate', 900,
+                'Be passionate.', 200,
+                'Be passionate..', 200,
+                'Be passionate...', 2000,
+                'Be passionate.', 300,
+                'Be passion', 400,
+                'Be obsessed', 2000,
+                'Be obsessed.', 5000,
+              ]}
+              wrapper="span"
+              speed={50}
+              repeat={Infinity}
+            />
+          </DitherText>
+        </h1>
       </div>
     </div>
   );
