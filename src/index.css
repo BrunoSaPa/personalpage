@@ -37,6 +37,12 @@ button { font: inherit; }
 .dither-flat { position: absolute; inset: 0; }
 
 .text-below { position: absolute; z-index: 2; bottom: 10.5%; left: 0; right: 0; padding: 1rem; text-align: center; opacity: var(--life, 1); pointer-events: none; }
+.text-below, .text-below * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: none;
+}
 .title { margin: 0; font-size: clamp(20px, 3vw, 40px); font-weight: 700; line-height: 1.3; animation: breathe 2s infinite alternate ease-in-out; }
 .title > span { position: relative; }
 /* Center the words themselves; the typing cursor has no visual weight to balance. */
