@@ -8,7 +8,7 @@ function FlowerScene({ isDying, motion, onMotion, onPhaseChange, onReady }) {
     <main
       className="flower-scene"
       role="img"
-      aria-label="An interactive flower. Scroll, drag, or use the arrow keys to turn it. Facing forward, it comes alive in color; turned away, its head droops as it fades to solid white and occasionally glitches."
+      aria-label="An interactive flower. Scroll, drag, or use the arrow keys to turn it. Facing forward, it comes alive in color; turned away, its head droops as it fades to dithered white and occasionally glitches."
       tabIndex={0}
     >
       <Canvas

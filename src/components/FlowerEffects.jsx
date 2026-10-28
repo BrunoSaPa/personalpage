@@ -15,26 +15,26 @@ uniform float rankStep;
 uniform float levels;
 uniform float cellSize;
 uniform vec2 renderSize;
-uniform float amount;
+uniform float life;
 ${DITHER_THRESHOLD_GLSL}
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec3 displayColor = pow(clamp(inputColor.rgb, 0.0, 1.0), vec3(1.0 / 2.2));
   float brightness = max(max(displayColor.r, displayColor.g), displayColor.b);
-  float tone = ditherTone(brightness, levels);
+  // Retain a fine grain even on the brightest white surfaces.
+  float tone = ditherTone(brightness * mix(0.9, 1.0, life), levels);
   vec2 cell = floor(uv * renderSize / cellSize);
   float threshold = ditherThreshold(cell, thresholds, matrixSize, rankStep);
   float ink = step(threshold, tone);
   vec3 inkColor = displayColor / max(brightness, 0.0001);
   // Convert back to linear light for the composer's display conversion.
   vec3 dithered = pow(inkColor, vec3(2.2)) * ink;
-  // Crossfade the texture over the original solid surface rather than switching passes.
   // Bloom's alpha carries the live, softly blurred silhouette. Extra black
   // coverage follows the animated geometry without changing its RGB or glow.
   float silhouette = clamp(inputColor.a, 0.0, 1.0);
   float halo = 1.0 - pow(1.0 - silhouette, 4.0);
-  float coverage = mix(silhouette, halo, amount);
-  outputColor = vec4(mix(inputColor.rgb, dithered, amount), coverage);
+  float coverage = mix(silhouette, halo, life);
+  outputColor = vec4(dithered, coverage);
 }
 `;
 
@@ -57,7 +57,7 @@ class DitherImageEffect extends Effect {
         ['levels', new Uniform(map.steps + 1)],
         ['cellSize', new Uniform(1)],
         ['renderSize', new Uniform(new Vector2())],
-        ['amount', new Uniform(1)],
+        ['life', new Uniform(1)],
       ]),
     });
     this.thresholdTexture = texture;
@@ -101,7 +101,7 @@ function FlowerEffects({ isDying, motion }) {
 
   useFrame(() => {
     const life = motion.current.life;
-    dither.uniforms.get('amount').value = life;
+    dither.uniforms.get('life').value = life;
     if (bloom.current) bloom.current.intensity = 0.3 * life * life;
     glitch.blendMode.opacity.value = 1 - life;
   });
