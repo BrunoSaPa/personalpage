@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import PropTypes from 'prop-types';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { BlendFunction, Effect, EffectAttribute, GlitchEffect, GlitchMode } from 'postprocessing';
@@ -14,6 +15,7 @@ uniform float rankStep;
 uniform float levels;
 uniform float cellSize;
 uniform vec2 renderSize;
+uniform float amount;
 ${DITHER_THRESHOLD_GLSL}
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
@@ -25,7 +27,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   float ink = step(threshold, tone);
   vec3 inkColor = displayColor / max(brightness, 0.0001);
   // Convert back to linear light for the composer's display conversion.
-  outputColor = vec4(pow(inkColor, vec3(2.2)) * ink, inputColor.a);
+  vec3 dithered = pow(inkColor, vec3(2.2)) * ink;
+  // Crossfade the texture over the original solid surface rather than switching passes.
+  outputColor = vec4(mix(inputColor.rgb, dithered, amount), inputColor.a);
 }
 `;
 
@@ -48,6 +52,7 @@ class DitherImageEffect extends Effect {
         ['levels', new Uniform(map.steps + 1)],
         ['cellSize', new Uniform(1)],
         ['renderSize', new Uniform(new Vector2())],
+        ['amount', new Uniform(1)],
       ]),
     });
     this.thresholdTexture = texture;
@@ -83,10 +88,18 @@ class FlowerGlitchEffect extends GlitchEffect {
   }
 }
 
-function FlowerEffects({ isDying }) {
+function FlowerEffects({ isDying, motion }) {
   const reducedMotion = usePrefersReducedMotion();
   const dither = useMemo(() => new DitherImageEffect(), []);
   const glitch = useMemo(() => new FlowerGlitchEffect(), []);
+  const bloom = useRef(null);
+
+  useFrame(() => {
+    const life = motion.current.life;
+    dither.uniforms.get('amount').value = life;
+    if (bloom.current) bloom.current.intensity = 0.3 * life * life;
+    glitch.blendMode.opacity.value = 1 - life;
+  });
 
   useEffect(() => {
     glitch.mode = isDying && !reducedMotion ? GlitchMode.SPORADIC : GlitchMode.DISABLED;
@@ -100,13 +113,13 @@ function FlowerEffects({ isDying }) {
   return (
     <EffectComposer multisampling={4}>
       {/* Include the darker stem and boot in the same glow pass as the petals. */}
-      <Bloom intensity={0.3} luminancePass-enabled={false} />
+      <Bloom ref={bloom} intensity={0.3} luminancePass-enabled={false} />
       <primitive object={glitch} />
       <primitive object={dither} />
     </EffectComposer>
   );
 }
 
-FlowerEffects.propTypes = { isDying: PropTypes.bool.isRequired };
+FlowerEffects.propTypes = { isDying: PropTypes.bool.isRequired, motion: PropTypes.object.isRequired };
 
 export default FlowerEffects;

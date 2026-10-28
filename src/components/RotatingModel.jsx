@@ -5,6 +5,8 @@ import { Center, useGLTF } from '@react-three/drei';
 import { Color, DoubleSide, MathUtils, MeshStandardMaterial } from 'three';
 import FlowerEffects from './FlowerEffects';
 import { usePrefersReducedMotion } from '../lib/dither/motion';
+import { advanceFlowerPose, createFlowerRig, flowerOpticalCenter } from './flowerRig';
+import { smoothFlowerGeometry } from './flowerGeometry';
 
 const materials = {
   body001: { color: '#679436', intensity: 4 },
@@ -12,13 +14,15 @@ const materials = {
   head001: { color: '#873f00', intensity: 10 },
   petal001: { color: '#FCBA04', intensity: 2 },
 };
-const dyingColor = new Color('#9b9b9b');
+const dyingColor = new Color('#ffffff');
 
-function RotatingModel({ isDying, onPhaseChange, onReady }) {
+function RotatingModel({ isDying, motion, onMotion, onPhaseChange, onReady }) {
   const { scene } = useGLTF('/assets/neonflower.glb');
   const modelRef = useRef(null);
   const speedRef = useRef(0);
   const phaseRef = useRef(false);
+  const lifeRef = useRef(1);
+  const poseRef = useRef({ droop: 0, velocity: 0, petals: 0, petalVelocity: 0 });
   const pointerRef = useRef(null);
   const pulseRef = useRef({ start: -10, next: 2 + Math.random() * 5 });
   const reducedMotion = usePrefersReducedMotion();
@@ -31,8 +35,7 @@ function RotatingModel({ isDying, onPhaseChange, onReady }) {
       child.visible = child.name.endsWith('002');
       if (!child.visible) return;
       const settings = materials[child.name.replace(/002$/, '001')];
-      child.geometry = child.geometry.clone();
-      child.geometry.computeVertexNormals();
+      child.geometry = smoothFlowerGeometry(child.geometry);
       child.material = new MeshStandardMaterial({
         color: settings.color,
         emissive: settings.color,
@@ -45,6 +48,10 @@ function RotatingModel({ isDying, onPhaseChange, onReady }) {
     });
     return clone;
   }, [scene]);
+  const { rig, opticalX } = useMemo(() => ({
+    rig: createFlowerRig(model),
+    opticalX: flowerOpticalCenter(model) * 0.78,
+  }), [model]);
 
   useEffect(() => {
     onReady();
@@ -114,6 +121,14 @@ function RotatingModel({ isDying, onPhaseChange, onReady }) {
       onPhaseChange(dying);
     }
 
+    const targetLife = dying ? 0 : 1;
+    let life = MathUtils.damp(lifeRef.current, targetLife, reducedMotion ? 8 : 2.2, Math.min(delta, 0.05));
+    if (Math.abs(life - targetLife) < 0.002) life = targetLife;
+    lifeRef.current = life;
+    advanceFlowerPose(poseRef.current, dying ? 1 : 0, Math.min(delta, 0.05), reducedMotion);
+    rig.update(poseRef.current.droop, poseRef.current.petals);
+    onMotion(modelRef.current.rotation.y - Math.PI, life);
+
     const time = state.clock.elapsedTime;
     const pulse = pulseRef.current;
     if (!dying && time > pulse.next) {
@@ -122,38 +137,38 @@ function RotatingModel({ isDying, onPhaseChange, onReady }) {
     }
     const pulsating = !dying && !reducedMotion && time - pulse.start < 2;
     const intensity = pulsating ? Math.sin(time * 5) * 0.5 + 0.5 : 0;
-    const smoothing = 1 - Math.pow(0.98, frameScale);
 
     model.traverse((child) => {
       if (!child.isMesh || !child.visible) return;
       const settings = materials[child.name.replace(/002$/, '001')];
       if (!settings) return;
-      const target = dying ? dyingColor : child.userData.aliveColor;
-      child.material.emissive.lerp(target, smoothing);
+      child.material.emissive.copy(dyingColor).lerp(child.userData.aliveColor, life);
       child.material.color.copy(child.material.emissive);
       child.material.emissiveIntensity = MathUtils.lerp(
-        child.material.emissiveIntensity,
-        dying ? 0.12 : settings.intensity * 0.035 + intensity * 0.06,
-        smoothing,
+        0.12,
+        settings.intensity * 0.035 + intensity * 0.06,
+        life,
       );
     });
   });
 
   return (
     <>
-      {/* A small optical offset balances the flower head against its curved stem and boot. */}
-      <group position={[-0.025, -0.12, 0]}>
-        <Center precise>
+      {/* Front-facing rotation mirrors x, so this offset balances its visual mass at zero. */}
+      <group position={[opticalX, -0.12, 0]}>
+        <Center precise disableX>
           <primitive ref={modelRef} object={model} scale={0.78} rotation={[0, Math.PI, 0]} dispose={null} />
         </Center>
       </group>
-      <FlowerEffects isDying={isDying} />
+      <FlowerEffects isDying={isDying} motion={motion} />
     </>
   );
 }
 
 RotatingModel.propTypes = {
   isDying: PropTypes.bool.isRequired,
+  motion: PropTypes.object.isRequired,
+  onMotion: PropTypes.func.isRequired,
   onPhaseChange: PropTypes.func.isRequired,
   onReady: PropTypes.func.isRequired,
 };

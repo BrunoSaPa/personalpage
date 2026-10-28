@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import DitherBackground from './components/DitherBackground';
 import FlowerScene from './components/FlowerScene';
@@ -7,13 +7,20 @@ import { DitherText } from './components/DitherText';
 function App() {
   const [isDying, setIsDying] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const appRef = useRef(null);
+  const motion = useRef({ turn: 0, life: 1 });
   const handleReady = useCallback(() => setIsReady(true), []);
+  const handleMotion = useCallback((turn, life) => {
+    motion.current.turn = turn;
+    motion.current.life = life;
+    appRef.current?.style.setProperty('--life', life);
+  }, []);
 
   return (
-    <div className="app" data-phase={isDying ? 'dying' : 'alive'}>
-      <DitherBackground isDying={isDying} />
+    <div ref={appRef} className="app" data-phase={isDying ? 'dying' : 'alive'}>
+      <DitherBackground isDying={isDying} motion={motion} />
       <div className={`cinematic-overlay${isReady ? ' revealed' : ''}`} aria-hidden="true" />
-      <FlowerScene isDying={isDying} onPhaseChange={setIsDying} onReady={handleReady} />
+      <FlowerScene isDying={isDying} motion={motion} onMotion={handleMotion} onPhaseChange={setIsDying} onReady={handleReady} />
       <div className="text-below" aria-hidden={isDying}>
         <DitherText
           as="h1"

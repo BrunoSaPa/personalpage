@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import { Canvas } from '@react-three/fiber';
 import RotatingModel from './RotatingModel';
 
-function FlowerScene({ isDying, onPhaseChange, onReady }) {
+function FlowerScene({ isDying, motion, onMotion, onPhaseChange, onReady }) {
   return (
     <main
       className="flower-scene"
       role="img"
-      aria-label="An interactive flower. Scroll, drag, or use the arrow keys to turn it. Facing forward, it comes alive in color; turned away, it fades to white and glitches."
+      aria-label="An interactive flower. Scroll, drag, or use the arrow keys to turn it. Facing forward, it comes alive in color; turned away, its head droops as it fades to solid white and occasionally glitches."
       tabIndex={0}
     >
       <Canvas
@@ -21,7 +21,7 @@ function FlowerScene({ isDying, onPhaseChange, onReady }) {
         <directionalLight position={[-3, 5, 6]} intensity={2.5} />
         <directionalLight position={[4, -1, -3]} intensity={0.65} />
         <Suspense fallback={null}>
-          <RotatingModel isDying={isDying} onPhaseChange={onPhaseChange} onReady={onReady} />
+          <RotatingModel isDying={isDying} motion={motion} onMotion={onMotion} onPhaseChange={onPhaseChange} onReady={onReady} />
         </Suspense>
       </Canvas>
     </main>
@@ -30,6 +30,8 @@ function FlowerScene({ isDying, onPhaseChange, onReady }) {
 
 FlowerScene.propTypes = {
   isDying: PropTypes.bool.isRequired,
+  motion: PropTypes.object.isRequired,
+  onMotion: PropTypes.func.isRequired,
   onPhaseChange: PropTypes.func.isRequired,
   onReady: PropTypes.func.isRequired,
 };
