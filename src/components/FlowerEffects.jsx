@@ -29,7 +29,12 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   // Convert back to linear light for the composer's display conversion.
   vec3 dithered = pow(inkColor, vec3(2.2)) * ink;
   // Crossfade the texture over the original solid surface rather than switching passes.
-  outputColor = vec4(mix(inputColor.rgb, dithered, amount), inputColor.a);
+  // Bloom's alpha carries the live, softly blurred silhouette. Extra black
+  // coverage follows the animated geometry without changing its RGB or glow.
+  float silhouette = clamp(inputColor.a, 0.0, 1.0);
+  float halo = 1.0 - pow(1.0 - silhouette, 4.0);
+  float coverage = mix(silhouette, halo, amount);
+  outputColor = vec4(mix(inputColor.rgb, dithered, amount), coverage);
 }
 `;
 

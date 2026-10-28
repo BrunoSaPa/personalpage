@@ -29,15 +29,6 @@ button { font: inherit; }
 .cinematic-overlay.revealed { opacity: 0; }
 
 .dither-background { position: absolute; z-index: 0; inset: 0; pointer-events: none; opacity: var(--life, 1); }
-.dither-background::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 18svh 16svh at 50% 38%, #000 60%, #000000e6 72%, #0000 100%),
-    radial-gradient(ellipse 10svh 18svh at 50% 58%, #000 50%, #000000d6 65%, #0000 100%),
-    radial-gradient(ellipse 9svh 7svh at calc(50% + 3svh) 75%, #000 55%, #0000 100%);
-}
 .dither-surface { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .dither-canvas { position: absolute; top: 0; left: 0; display: block; opacity: 1; image-rendering: pixelated; transition: opacity 700ms ease-out; }
 .dither-surface[data-state='fallback'] > .dither-canvas { opacity: 0; transition: none; }
