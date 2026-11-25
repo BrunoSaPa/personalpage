@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import DitherBackground from './components/DitherBackground';
 import FlowerScene from './components/FlowerScene';
@@ -8,12 +8,34 @@ function App() {
   const [isDying, setIsDying] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const appRef = useRef(null);
+  const titleRef = useRef(null);
   const motion = useRef({ turn: 0, life: 1 });
   const handleReady = useCallback(() => setIsReady(true), []);
-  const handleMotion = useCallback((turn, life) => {
+  const handleMotion = useCallback((turn, life, bloomOffset) => {
     motion.current.turn = turn;
     motion.current.life = life;
     appRef.current?.style.setProperty('--life', life);
+    titleRef.current?.style.setProperty('--bloom-offset', `${bloomOffset}px`);
+  }, []);
+
+  useEffect(() => {
+    const title = titleRef.current;
+    const label = title.firstElementChild;
+    const range = document.createRange();
+    const observer = new ResizeObserver(() => {
+      const text = label.firstChild;
+      const periods = text?.textContent.match(/\.+$/)?.[0].length ?? 0;
+      let offset = 0;
+      if (periods) {
+        range.setStart(text, text.length - periods);
+        range.setEnd(text, text.length);
+        offset = range.getBoundingClientRect().width / 2;
+      }
+      // Hang the periods so the words keep their center as the ellipsis types out.
+      title.style.setProperty('--punctuation-offset', `${offset}px`);
+    });
+    observer.observe(label);
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -22,7 +44,7 @@ function App() {
       <div className={`cinematic-overlay${isReady ? ' revealed' : ''}`} aria-hidden="true" />
       <FlowerScene isDying={isDying} motion={motion} onMotion={handleMotion} onPhaseChange={setIsDying} onReady={handleReady} />
       <div className="text-below" aria-hidden={isDying}>
-        <h1 className="title">
+        <h1 ref={titleRef} className="title">
           <DitherText
             asChild
             color="#e8e5d7"

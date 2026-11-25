@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useFrame } from '@react-three/fiber';
 import { Center, useGLTF } from '@react-three/drei';
-import { Color, DoubleSide, MathUtils, MeshStandardMaterial } from 'three';
+import { Color, DoubleSide, MathUtils, MeshStandardMaterial, Vector3 } from 'three';
 import FlowerEffects from './FlowerEffects';
 import { usePrefersReducedMotion } from '../lib/dither/motion';
-import { advanceFlowerPose, createFlowerRig, flowerOpticalCenter } from './flowerRig';
+import { advanceFlowerPose, bendFlowerPoint, createFlowerRig, flowerOpticalCenter } from './flowerRig';
 import { smoothFlowerGeometry } from './flowerGeometry';
 
 const materials = {
@@ -48,10 +48,18 @@ function RotatingModel({ isDying, motion, onMotion, onPhaseChange, onReady }) {
     });
     return clone;
   }, [scene]);
-  const { rig, opticalX } = useMemo(() => ({
-    rig: createFlowerRig(model),
-    opticalX: flowerOpticalCenter(model) * 0.78,
-  }), [model]);
+  const { rig, opticalX, bloom, bloomCenter, projectedBloom } = useMemo(() => {
+    const rig = createFlowerRig(model);
+    const bloom = model.getObjectByName('head002');
+    bloom.geometry.computeBoundingBox();
+    return {
+      rig,
+      opticalX: flowerOpticalCenter(model) * 0.78,
+      bloom,
+      bloomCenter: bloom.geometry.boundingBox.getCenter(new Vector3()),
+      projectedBloom: new Vector3(),
+    };
+  }, [model]);
 
   useEffect(() => {
     onReady();
@@ -125,9 +133,16 @@ function RotatingModel({ isDying, motion, onMotion, onPhaseChange, onReady }) {
     let life = MathUtils.damp(lifeRef.current, targetLife, reducedMotion ? 8 : 2.2, Math.min(delta, 0.05));
     if (Math.abs(life - targetLife) < 0.002) life = targetLife;
     lifeRef.current = life;
-    advanceFlowerPose(poseRef.current, dying ? 1 : 0, Math.min(delta, 0.05), reducedMotion);
-    rig.update(poseRef.current.droop, poseRef.current.petals);
-    onMotion(modelRef.current.rotation.y - Math.PI, life);
+    const pose = poseRef.current;
+    advanceFlowerPose(pose, dying ? 1 : 0, Math.min(delta, 0.05), reducedMotion);
+    rig.update(pose.droop, pose.petals);
+
+    // The round flower head sets the visual axis for the wording below it.
+    const [bloomY, bloomZ] = bendFlowerPoint(bloomCenter.y, bloomCenter.z, pose.droop, true);
+    projectedBloom.set(bloomCenter.x, bloomY, bloomZ);
+    bloom.localToWorld(projectedBloom).project(state.camera);
+    const bloomOffset = projectedBloom.x * state.size.width / 2;
+    onMotion(modelRef.current.rotation.y - Math.PI, life, bloomOffset);
 
     const time = state.clock.elapsedTime;
     const pulse = pulseRef.current;
